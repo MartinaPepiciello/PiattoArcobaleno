@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "piatto-arcobaleno",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-10-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "piatto-arcobaleno",
+      "database_id": "138970f0-ef1b-4acd-b062-3921ca313ada"
+    }
+  ]
+}

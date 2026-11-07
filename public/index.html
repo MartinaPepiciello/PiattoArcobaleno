@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Piatto Arcobaleno</title>
+  <meta name="description" content="Il diario di famiglia di quello che mangiamo, colore per colore.">
+  <meta name="theme-color" content="#faf6ef">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Piatto">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,600&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Accesso -->
+  <section class="screen active" id="s-login">
+    <div class="login">
+      <img src="/icon.svg" alt="" class="logo">
+      <h1>Piatto <em>Arcobaleno</em></h1>
+      <p class="tag">Il diario di quello che mangiamo,<br>colore per colore.</p>
+      <form id="login-form" autocomplete="off">
+        <label for="nick">Come ti chiami?</label>
+        <input id="nick" maxlength="24" placeholder="Il tuo soprannome" required enterkeyhint="go">
+        <button class="btn primary" type="submit">A tavola!</button>
+      </form>
+      <p class="muted small">Niente password: il diario resta legato al soprannome,<br>su qualsiasi telefono o computer.</p>
+    </div>
+  </section>
+
+  <!-- App -->
+  <section class="screen" id="s-app">
+    <header class="top">
+      <div class="brand"><img src="/icon.svg" alt=""><span>Piatto <em>Arcobaleno</em></span></div>
+      <button class="who" id="btn-who" aria-haspopup="true"><span id="who-name"></span><svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </header>
+
+    <!-- Calendario -->
+    <main class="view active" id="v-cal">
+      <div class="month-bar">
+        <button class="icon-btn" id="m-prev" aria-label="Mese precedente"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <h2 id="m-title"></h2>
+        <button class="icon-btn" id="m-next" aria-label="Mese successivo"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="pill" id="m-today">Oggi</button>
+      </div>
+      <div class="cal">
+        <div class="dow"><span>Lun</span><span>Mar</span><span>Mer</span><span>Gio</span><span>Ven</span><span>Sab</span><span>Dom</span></div>
+        <div class="grid" id="grid"></div>
+      </div>
+      <section class="day-panel">
+        <div class="day-head">
+          <h3 id="d-title"></h3>
+          <button class="btn small primary" id="d-add"><span aria-hidden="true">+</span> Aggiungi</button>
+        </div>
+        <ul class="events" id="d-list"></ul>
+      </section>
+      <button class="fab" id="fab" aria-label="Aggiungi qualcosa che hai mangiato">
+        <svg viewBox="0 0 24 24" width="30" height="30"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+      </button>
+    </main>
+
+    <!-- Statistiche -->
+    <main class="view" id="v-stats">
+      <h2 class="view-title">Com'è andata?</h2>
+      <div class="filters">
+        <div class="seg" id="range-seg" role="tablist">
+          <button data-range="7" class="on">7 giorni</button>
+          <button data-range="30">30 giorni</button>
+          <button data-range="custom">Intervallo</button>
+        </div>
+        <div class="custom" id="custom" hidden>
+          <label>Dal <input type="date" id="c-from"></label>
+          <label>al <input type="date" id="c-to"></label>
+        </div>
+        <div class="seg small" id="metric-seg">
+          <button data-metric="portions" class="on">Porzioni</button>
+          <button data-metric="count">Volte</button>
+        </div>
+      </div>
+      <p class="summary" id="summary"></p>
+      <div class="chart" id="chart" role="img"></div>
+      <p class="muted small chart-foot" id="chart-foot"></p>
+    </main>
+
+    <nav class="tabbar">
+      <button class="on" data-view="v-cal">
+        <svg viewBox="0 0 24 24" width="24" height="24"><rect x="3.5" y="5" width="17" height="15.5" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Calendario</span>
+      </button>
+      <button data-view="v-stats">
+        <svg viewBox="0 0 24 24" width="24" height="24"><path d="M4 20h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="11" width="3.5" height="6.5" rx="1" fill="currentColor"/><rect x="10.25" y="5" width="3.5" height="12.5" rx="1" fill="currentColor"/><rect x="15.5" y="8.5" width="3.5" height="9" rx="1" fill="currentColor"/></svg>
+        <span>Statistiche</span>
+      </button>
+    </nav>
+  </section>
+
+  <!-- Aggiungi / modifica -->
+  <div class="overlay" id="ov-entry" hidden>
+    <form class="sheet" id="entry-form" autocomplete="off">
+      <div class="grabber" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <h3 id="e-title">Cosa hai mangiato?</h3>
+        <button type="button" class="icon-btn" data-close aria-label="Chiudi"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+      </div>
+      <label class="date-row">Giorno <input type="date" id="e-day" required></label>
+      <div class="cats" id="e-cats" role="radiogroup" aria-label="Categoria"></div>
+      <div class="field">
+        <span class="field-label">Porzioni</span>
+        <div class="portions">
+          <button type="button" class="step" id="p-minus" aria-label="Meno">−</button>
+          <input id="e-portions" inputmode="decimal" value="1" aria-label="Porzioni">
+          <button type="button" class="step" id="p-plus" aria-label="Più">+</button>
+        </div>
+        <div class="quick" id="p-quick">
+          <button type="button" data-p="0.5">½</button>
+          <button type="button" data-p="1">1</button>
+          <button type="button" data-p="1.5">1½</button>
+          <button type="button" data-p="2">2</button>
+        </div>
+      </div>
+      <label class="field">
+        <span class="field-label">Nota <small>(facoltativa)</small></span>
+        <input id="e-note" maxlength="140" placeholder="es. pasta al pomodoro, a cena dalla nonna" enterkeyhint="done">
+      </label>
+      <p class="form-error" id="e-error" hidden></p>
+      <div class="sheet-actions">
+        <button type="button" class="btn danger" id="e-delete" hidden>Elimina</button>
+        <button type="submit" class="btn primary grow" id="e-save">Aggiungi</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Menu utente -->
+  <div class="overlay" id="ov-who" hidden>
+    <div class="card who-card">
+      <p>Sei <b id="who-name2"></b>.</p>
+      <button class="btn" id="btn-logout">Non sei tu? Cambia nome</button>
+      <button class="btn ghost" data-close>Chiudi</button>
+    </div>
+  </div>
+
+  <div class="tip" id="tip" hidden></div>
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

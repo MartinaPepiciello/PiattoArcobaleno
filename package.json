@@ -1,0 +1,16 @@
+{
+  "name": "piatto-arcobaleno",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init:local": "wrangler d1 execute piatto-arcobaleno --local --file=schema.sql",
+    "db:init:remote": "wrangler d1 execute piatto-arcobaleno --remote --file=schema.sql",
+    "icons": "node scripts/build-icons.mjs"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.5",
+    "wrangler": "^4.40.0"
+  }
+}
