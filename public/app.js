@@ -332,6 +332,133 @@ function hideTip() {
   document.querySelectorAll('.bar-row.hot').forEach((b) => b.classList.remove('hot'));
 }
 
+// ---------- promemoria giornaliero (notifiche push) ----------
+// Le impostazioni valgono per questo dispositivo: { on, time, nick, endpoint }.
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const pushSupported = () => isSecureContext && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const reminder = () => ({ on: false, time: '21:00', ...(store.get('reminder') || {}) });
+const tz = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Rome';
+
+function keyBytes(b64) {
+  const s = atob(b64.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (b64.length % 4)) % 4));
+  return Uint8Array.from(s, (c) => c.charCodeAt(0));
+}
+
+// Perché i promemoria non si possono attivare qui (o null se si può).
+function reminderBlocker() {
+  if (!isSecureContext) return 'I promemoria funzionano solo dalla versione online dell\'app.';
+  if (isIOS && !isStandalone()) return 'Su iPhone prima aggiungi l\'app alla schermata Home (Condividi → «Aggiungi alla schermata Home»), poi aprila da lì e attiva il promemoria.';
+  if (!pushSupported()) return 'Questo browser non supporta le notifiche. Prova con Chrome, oppure aggiungi l\'app alla schermata Home.';
+  if (Notification.permission === 'denied') return 'Le notifiche sono bloccate per questo sito: riattivale nelle impostazioni del telefono o del browser, poi riprova.';
+  return null;
+}
+
+function remMsg(text) {
+  $('#r-msg').textContent = text || '';
+  $('#r-msg').hidden = !text;
+}
+
+function renderReminder(msg) {
+  const r = reminder();
+  const blocker = reminderBlocker();
+  const on = r.on && !blocker;
+  $('#r-on').checked = on;
+  $('#r-on').disabled = !!blocker && !r.on;
+  $('#r-time').value = r.time;
+  $('#r-time-row').hidden = !on;
+  $('#r-test').hidden = !on;
+  $('#bell-dot').hidden = !on;
+  remMsg(msg ?? blocker ?? (on ? `Ti arriverà una notifica ogni giorno alle ${r.time}.` : ''));
+}
+
+async function pushSubscription(create) {
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if (!sub && create) {
+    const { key } = await (await fetch('/api/push/key')).json();
+    sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(key) });
+  }
+  return sub;
+}
+
+async function sendReminderSettings(sub, time) {
+  const res = await fetch('/api/push/' + encodeURIComponent(me), {
+    method: 'PUT', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ subscription: sub.toJSON(), time, tz: tz() }),
+  });
+  if (!res.ok) throw new Error(res.status);
+  store.set('reminder', { on: true, time, nick: me, endpoint: sub.endpoint });
+}
+
+async function enableReminder() {
+  const blocker = reminderBlocker();
+  if (blocker) return renderReminder(blocker);
+  remMsg('Un attimo…');
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') {
+      store.set('reminder', { ...reminder(), on: false });
+      return renderReminder(perm === 'denied' ? reminderBlocker() : 'Per i promemoria serve il permesso per le notifiche.');
+    }
+    const sub = await pushSubscription(true);
+    await sendReminderSettings(sub, $('#r-time').value || reminder().time);
+    renderReminder();
+  } catch {
+    store.set('reminder', { ...reminder(), on: false });
+    renderReminder('Non sono riuscito ad attivare il promemoria. Controlla la connessione e riprova.');
+  }
+}
+
+async function disableReminder() {
+  store.set('reminder', { ...reminder(), on: false });
+  renderReminder('Promemoria spento.');
+  try {
+    const sub = await pushSubscription(false);
+    if (sub) {
+      await fetch('/api/push/remove', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) });
+      await sub.unsubscribe();
+    }
+  } catch {}
+}
+
+async function changeReminderTime() {
+  const time = $('#r-time').value;
+  if (!/^\d{2}:\d{2}$/.test(time) || !reminder().on) return;
+  try {
+    const sub = await pushSubscription(true);
+    await sendReminderSettings(sub, time);
+    renderReminder(`Fatto: il promemoria arriverà ogni giorno alle ${time}.`);
+  } catch {
+    renderReminder('Orario non salvato: controlla la connessione e riprova.');
+  }
+}
+
+async function testReminder() {
+  remMsg('Invio…');
+  try {
+    const sub = await pushSubscription(false);
+    const res = await fetch('/api/push/test', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ endpoint: sub?.endpoint }) });
+    const data = await res.json();
+    remMsg(data.ok ? 'Inviata! Dovrebbe arrivare tra pochi secondi.' : 'La prova non è partita. Spegni e riaccendi il promemoria, poi riprova.');
+  } catch {
+    remMsg('La prova non è partita: controlla la connessione.');
+  }
+}
+
+// All'avvio: se il promemoria era acceso, controlla che l'iscrizione esista ancora
+// e collegala al soprannome attuale.
+async function syncReminder() {
+  const r = reminder();
+  if (!r.on || reminderBlocker()) return renderReminder();
+  try {
+    const sub = await pushSubscription(false);
+    if (!sub) store.set('reminder', { ...r, on: false });
+    else if (r.nick !== me || r.endpoint !== sub.endpoint) await sendReminderSettings(sub, r.time);
+  } catch {}
+  renderReminder();
+}
+
 // ---------- viste ----------
 function showView(id) {
   view = id;
@@ -363,6 +490,7 @@ function login(name) {
   month = null;
   show('s-app');
   showView('v-cal');
+  syncReminder();
 }
 
 let toastTimer = null;
@@ -377,7 +505,10 @@ function toast(msg) {
 // ---------- avvio ----------
 function bind() {
   $('#login-form').addEventListener('submit', (e) => { e.preventDefault(); login($('#nick').value); });
-  $('#btn-who').onclick = () => { $('#ov-who').hidden = false; };
+  $('#btn-who').onclick = $('#btn-bell').onclick = () => { renderReminder(); $('#ov-who').hidden = false; };
+  $('#r-on').addEventListener('change', (e) => (e.target.checked ? enableReminder() : disableReminder()));
+  $('#r-time').addEventListener('change', changeReminderTime);
+  $('#r-test').onclick = testReminder;
   $('#btn-logout').onclick = () => {
     store.del('nick');
     me = null;
@@ -476,6 +607,7 @@ function bind() {
   });
 }
 
+if ('serviceWorker' in navigator && isSecureContext) navigator.serviceWorker.register('/sw.js').catch(() => {});
 buildCats();
 bind();
 const savedNick = store.get('nick');

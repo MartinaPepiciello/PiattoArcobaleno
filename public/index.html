@@ -37,7 +37,10 @@
   <section class="screen" id="s-app">
     <header class="top">
       <div class="brand"><img src="/icon.svg" alt=""><span>Piatto <em>Arcobaleno</em></span></div>
+      <span class="top-actions">
+      <button class="icon-btn bell" id="btn-bell" aria-label="Promemoria giornaliero"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2H4.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 21h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><i class="bell-dot" id="bell-dot" hidden></i></button>
       <button class="who" id="btn-who" aria-haspopup="true"><span id="who-name"></span><svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </span>
     </header>
 
     <!-- Calendario -->
@@ -139,6 +142,15 @@
   <div class="overlay" id="ov-who" hidden>
     <div class="card who-card">
       <p>Sei <b id="who-name2"></b>.</p>
+      <div class="reminder">
+        <label class="rem-row">
+          <span><b>Promemoria giornaliero</b><small>Una notifica al giorno su questo dispositivo</small></span>
+          <span class="switch"><input type="checkbox" id="r-on" role="switch"><span aria-hidden="true"></span></span>
+        </label>
+        <label class="rem-time" id="r-time-row" hidden>Ogni giorno alle <input type="time" id="r-time" value="21:00" step="300"></label>
+        <p class="rem-msg" id="r-msg" hidden></p>
+        <button class="link" id="r-test" hidden>Mandami una notifica di prova</button>
+      </div>
       <button class="btn" id="btn-logout">Non sei tu? Cambia nome</button>
       <button class="btn ghost" data-close>Chiudi</button>
     </div>

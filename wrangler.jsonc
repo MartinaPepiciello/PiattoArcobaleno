@@ -3,6 +3,13 @@
   "name": "piatto-arcobaleno",
   "main": "src/worker.js",
   "compatibility_date": "2025-10-01",
+  // Daily reminders: every 5 minutes, send the notifications that are due.
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "vars": {
+    // Public half of the Web Push (VAPID) key pair. The private half is the secret VAPID_PRIVATE_JWK.
+    "VAPID_PUBLIC_KEY": "BHJFSCcSBw5_lRrtgS5YF9j-l1WuwVIH4LuLF4ueRp-BZKBFX2jGA8ZME7eOoMZU6eIMI2QSGf1X7UtNsKcoybs",
+    "VAPID_SUBJECT": "https://piatto-arcobaleno.mpepiciello.workers.dev"
+  },
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
